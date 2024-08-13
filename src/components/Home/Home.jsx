@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import send_icon from '../../assets/images/send.png'
-import {GoogleGenerativeAI, HarmCategory, HarmBlockThreshold}  from '@google/generative-ai'
+import {GoogleGenerativeAI}  from '@google/generative-ai'
 import TypeIt from "typeit-react";
+import { marked } from 'marked';
 
 const apiKey = process.env.REACT_APP_GEMINI_API_KEY;
 
@@ -14,8 +15,7 @@ const model = genAI.getGenerativeModel({
 
 function Home() {
   const [input, setInput] = useState('');
-  const [sentMsg, setSentMsg] = useState('')
-  const [answer, setAnswer] = useState('');
+  const [chatHistory, setChatHistory] = useState([])
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -25,19 +25,19 @@ function Home() {
       const response = await result.response;
       const text = response.text();
 
-      setSentMsg(input)
-      setAnswer(text)
+      const newMessage = { question: input, answer: text };
+      setChatHistory([...chatHistory, newMessage]);
+
+      setInput('')
       console.log(text);
 
     } catch (error) {
       console.log(error)
-    } finally{
-      setInput('')
-    }
+    } 
   };
 
   return (
-    <div className='flex w-full  bg-[#19181d] text-white h-[100vh] py-8 px-8'>
+    <div className='flex w-full  bg-[hsl(224,30%,4%)] text-white h-[100vh] py-8 px-8'>
       <div className="w-full px-8 py-4 mx-auto sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl xxl:max-w-xxl flex flex-row font-poppins gap-4 bg-[hsl(224,32%,14%)] rounded-xl">
 
         <div className=' w-1/3  flex flex-col px-6 py-6 text-[14px] text-gray-500 font-medium bg-[#10141e] rounded-xl'>
@@ -58,41 +58,48 @@ function Home() {
           </div>
         </div>
 
-        <div className=' w-2/3  flex flex-col px-5 py-6 bg-[#10141e] rounded-xl h-full justify-between'>
+        <div className=' w-2/3 flex flex-col pl-5 py-6 bg-[#10141e] rounded-xl h-full justify-between'>
 
-          <div className=' flex w-full h-[90%] items-end flex-col text-[15px]'>
+          <div className=' flex flex-col h-[90%] overflow-y-auto pr-5'>
+
+            {chatHistory.map((message, index) => (
+              <div className=' flex w-full h-fit items-end flex-col text-[15px] mb-4 border-b-[1px] pb-4'>
 
               <div className=' max-w-[45%] w-fit text-justify pl-6 pr-7 py-[14px] rounded-xl bg-[#20232a] h-fit mb-6 ease-linear duration-500'>
-                {sentMsg}
+                {message.question}
               </div>
 
               <TypeIt
-                key={answer}
+                key={index}
                 className = {'w-full text-justify pr-6 font-roboto'}
                 options={{
-                    strings: [answer],
+                    strings: [message.answer],
                     speed: 10,
                     waitUntilVisible: true,
-                    cursor: false
-                }}
-            />
+                    cursor: false,
+                }
+              }
+              />
 
+              </div>
+            ))}
           </div>
-
           
-
-          <div className="flex border-[1px] border-gray-500 rounded-xl overflow-hidden ">
+          <form onSubmit={handleSubmit} className="flex border-[1px] border-gray-500 rounded-xl overflow-hidden mr-5">
             <input
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Masukkan teks"
+              placeholder="Chat with SmartChat"
               className="flex-1 py-3 px-3 border-none outline-none bg-[#10141e]"
             />
-            <button className="bg-blue-500 text-white px-4 py-2 font-semibold hover:bg-blue-600" onClick={handleSubmit}>
-              <img src={send_icon} alt="" className=' w-[25px] h-auto' />
+            <button
+              type="submit"
+              className="bg-[#33A5FF] text-white px-4 py-2 font-semibold hover:bg-[hsl(206,100%,48%)] hover:ease-linear duration-200"
+            >
+              <img src={send_icon} alt="Send" className='w-[28px] h-auto' />
             </button>
-          </div>
+          </form>
 
         </div>
 
