@@ -15,7 +15,8 @@ export default {
     },
     extend: {        
       fontFamily: {
-      'poppins': ['Poppins', 'sans-serif']
+      'poppins': ['Poppins', 'sans-serif'],
+      'roboto': ['Roboto Mono', 'monospace']
       },
       maxWidth: {
         sm: `${540 / 16}rem`,

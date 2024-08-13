@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { OpenAI } from 'openai';
 import send_icon from '../../assets/images/send.png'
 import {GoogleGenerativeAI, HarmCategory, HarmBlockThreshold}  from '@google/generative-ai'
+import TypeIt from "typeit-react";
 
-const apiKey = 'AIzaSyD3dMesZDTFxWkYV7VBeLH6LSSrwUd7rII'
+const apiKey = process.env.REACT_APP_GEMINI_API_KEY;
 
 const genAI = new GoogleGenerativeAI(apiKey);
 
@@ -11,8 +11,10 @@ const model = genAI.getGenerativeModel({
   model: "gemini-1.5-flash",
 });
 
+
 function Home() {
   const [input, setInput] = useState('');
+  const [sentMsg, setSentMsg] = useState('')
   const [answer, setAnswer] = useState('');
 
   const handleSubmit = async (e) => {
@@ -22,10 +24,15 @@ function Home() {
       const result = await model.generateContent(input);
       const response = await result.response;
       const text = response.text();
+
+      setSentMsg(input)
+      setAnswer(text)
       console.log(text);
 
     } catch (error) {
       console.log(error)
+    } finally{
+      setInput('')
     }
   };
 
@@ -33,8 +40,8 @@ function Home() {
     <div className='flex w-full  bg-[#19181d] text-white h-[100vh] py-8 px-8'>
       <div className="w-full px-8 py-4 mx-auto sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl xxl:max-w-xxl flex flex-row font-poppins gap-4 bg-[hsl(224,32%,14%)] rounded-xl">
 
-        <div className=' w-1/3  flex flex-col px-6 py-4 text-[14px] text-gray-500 font-medium bg-[#10141e] rounded-xl'>
-          <h2 className=' text-[#0084FF] text-[28px] font-semibold mb-4'>SmartChat</h2>
+        <div className=' w-1/3  flex flex-col px-6 py-6 text-[14px] text-gray-500 font-medium bg-[#10141e] rounded-xl'>
+          <h2 className=' text-[#0084FF] text-[28px] font-semibold mb-6'>SmartChat</h2>
 
           <p className=' mb-2'>Chat List</p>
 
@@ -46,13 +53,33 @@ function Home() {
               <div className="p-3 rounded-md cursor-pointer">Pertanyaan Kedua</div>
               <div className="p-3 rounded-md cursor-pointer">Ketiga dan terakhir</div>
 
-
             </div>
             
           </div>
         </div>
 
-        <div className=' w-2/3  flex flex-col px-4 py-4 bg-[#10141e] rounded-xl h-full justify-end'>
+        <div className=' w-2/3  flex flex-col px-5 py-6 bg-[#10141e] rounded-xl h-full justify-between'>
+
+          <div className=' flex w-full h-[90%] items-end flex-col text-[15px]'>
+
+              <div className=' max-w-[45%] w-fit text-justify pl-6 pr-7 py-[14px] rounded-xl bg-[#20232a] h-fit mb-6 ease-linear duration-500'>
+                {sentMsg}
+              </div>
+
+              <TypeIt
+                key={answer}
+                className = {'w-full text-justify pr-6 font-roboto'}
+                options={{
+                    strings: [answer],
+                    speed: 10,
+                    waitUntilVisible: true,
+                    cursor: false
+                }}
+            />
+
+          </div>
+
+          
 
           <div className="flex border-[1px] border-gray-500 rounded-xl overflow-hidden ">
             <input
