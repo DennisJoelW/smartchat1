@@ -1,9 +1,15 @@
 import React, { useState } from 'react';
 import { OpenAI } from 'openai';
+import send_icon from '../../assets/images/send.png'
+import {GoogleGenerativeAI, HarmCategory, HarmBlockThreshold}  from '@google/generative-ai'
 
-const apiKey = '';
+const apiKey = 'AIzaSyD3dMesZDTFxWkYV7VBeLH6LSSrwUd7rII'
 
-const openai = new OpenAI({ apiKey, dangerouslyAllowBrowser: true });
+const genAI = new GoogleGenerativeAI(apiKey);
+
+const model = genAI.getGenerativeModel({
+  model: "gemini-1.5-flash",
+});
 
 function Home() {
   const [input, setInput] = useState('');
@@ -13,17 +19,13 @@ function Home() {
     e.preventDefault();
 
     try {
-      const response = await openai.chat.completions.create({
-        model: 'davinci-002',
-        messages: [{ role: 'system', content: input }],
-        max_tokens: 100,
-      });
+      const result = await model.generateContent(input);
+      const response = await result.response;
+      const text = response.text();
+      console.log(text);
 
-      console.log(response.choices[0])
-
-      setAnswer(response.choices[0].message.content);
     } catch (error) {
-      console.error('Error fetching data:', error);
+      console.log(error)
     }
   };
 
@@ -44,6 +46,7 @@ function Home() {
               <div className="p-3 rounded-md cursor-pointer">Pertanyaan Kedua</div>
               <div className="p-3 rounded-md cursor-pointer">Ketiga dan terakhir</div>
 
+
             </div>
             
           </div>
@@ -51,7 +54,7 @@ function Home() {
 
         <div className=' w-2/3  flex flex-col px-4 py-4 bg-[#10141e] rounded-xl h-full justify-end'>
 
-          <div className="flex border border-gray-500 rounded-lg overflow-hidden ">
+          <div className="flex border-[1px] border-gray-500 rounded-xl overflow-hidden ">
             <input
               type="text"
               value={input}
@@ -59,8 +62,8 @@ function Home() {
               placeholder="Masukkan teks"
               className="flex-1 py-3 px-3 border-none outline-none bg-[#10141e]"
             />
-            <button className="bg-blue-500 text-white px-4 py-2 font-semibold hover:bg-blue-600">
-              Submit
+            <button className="bg-blue-500 text-white px-4 py-2 font-semibold hover:bg-blue-600" onClick={handleSubmit}>
+              <img src={send_icon} alt="" className=' w-[25px] h-auto' />
             </button>
           </div>
 
@@ -70,5 +73,4 @@ function Home() {
     </div>
   );
 }
-
 export default Home;
