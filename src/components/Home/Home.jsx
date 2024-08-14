@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import send_icon from '../../assets/images/send.png'
 import robot_icon from '../../assets/images/robot.png'
 import delete_icon from '../../assets/images/delete.png'
+import menu_icon from '../../assets/images/menus.png'
 
 import {GoogleGenerativeAI}  from '@google/generative-ai'
 
@@ -107,7 +108,7 @@ function Home() {
 
   const deleteChat = async (num) => {
     try {
-      await api.delete(`chat-history/${num}`)
+      await api.delete(`/chat-history/${num}`)
 
       setChatList(prevChatList => prevChatList.filter(chat => chat.chatid !== num));
 
@@ -123,7 +124,24 @@ function Home() {
   }
 
   const newChat = async () => {
+    try {
+      const now = new Date();
+      const response = await api.post(`/chat-history`, {
+        user_id: user.id,
+        date: now,
+        questions_answers: [
+          {
+              question: null,
+              answer: null
+          }
+      ]
+      });
 
+      setChatList(prevChatList => [...prevChatList, response.data]);
+      setChatSelected(response.chatid)
+    } catch (error) {
+      console.log(error)
+    }
   }
 
   useEffect(() => {
@@ -143,11 +161,15 @@ function Home() {
 
 
   return (
-    <div className='flex w-full  bg-[hsl(224,30%,4%)] text-white h-[100vh] py-8 px-8'>
-      <div className="w-full px-8 py-4 mx-auto sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl xxl:max-w-xxl flex flex-row font-poppins gap-4 bg-[hsl(224,32%,14%)] rounded-xl">
+    <div className='flex w-full  bg-[hsl(224,30%,4%)] text-white h-[100vh] py-8 md:px-8 px-2'>
+      <div className="w-full md:px-8 px-2 py-4 mx-auto sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl xxl:max-w-xxl flex flex-row font-poppins gap-4 bg-[hsl(224,32%,14%)] rounded-xl">
 
-        <div className={` w-1/3  flex flex-col px-6 py-6 text-[14px] text-gray-500 font-medium bg-[#10141e] rounded-xl ${user == ''? "justify-between" : ""}`}>
-          <h2 className=' text-[#0084FF] text-[28px] font-semibold mb-6'>SmartChat</h2>
+        <div className={`w-1/3 md:flex hidden flex-col px-6 py-6 text-[14px] text-gray-500 font-medium bg-[#10141e] rounded-xl ${user == ''? "justify-between" : ""}`}>
+
+          <div className=' flex md:flex-row flex-col w-full md:items-center mb-6 justify-between'>
+            <h2 className=' text-[#0084FF] md:text-[28px] text-[16px] font-semibold md:max-w-[45%] w-full md:mb-0 mb-2'>SmartChat</h2>
+            {user ? <button className=' w-full md:max-w-[45%] py-2 bg-[#33A5FF] md:text-[15px] text-[12px] hover:bg-[#008bf5] duration-200 ease-linear text-white rounded-md' onClick={newChat}>New Chat</button> : ""}
+          </div>
 
 
           {user == '' ? 
@@ -160,7 +182,7 @@ function Home() {
               className=' px-3 py-3 rounded-xl mb-4 text-white bg-[#20232A]'
             />
 
-            <button className=' bg-[#33A5FF] px-3 py-3 rounded-xl text-white hover:bg-[hsl(206,100%,48%)] ease-in-out duration-200' onClick={login}>
+            <button className=' bg-[#33A5FF] px-3 py-3 rounded-xl text-white hover:bg-[#008bf5] ease-in-out duration-200' onClick={login}>
               Login
             </button>
           </div>
@@ -175,7 +197,8 @@ function Home() {
                   {chatList.map((item, index) => (
                     <div key={index} className={`p-3 rounded-md cursor-pointer hover:bg-[#20232A] ease-linear duration-200 mb-[5px] flex flex-row items-center justify-between
                     ${item.chatid === chatSelected ? "bg-[#20232A] text-white" : "bg-none"}`} onClick={() => handleChatClicked(item.chatid)}>
-                      {item.questions_answers.length > 0 ? item.questions_answers[0].question : 'No questions available'}
+                      {item.questions_answers[0].question != null ? item.questions_answers[0].question : 'Waiting for question...'}
+
                       <div> 
                       {item.chatid === chatSelected ? (
                           <img src={delete_icon} className=' hover:bg-[hsl(0,72%,40%)] p-2 rounded-lg' width={31} alt="Delete Icon" onClick={() => deleteChat(item.chatid)} />
@@ -196,14 +219,18 @@ function Home() {
 
         </div>
 
-        <div className=' w-2/3 flex flex-col pl-5 py-6 bg-[#10141e] rounded-xl h-full justify-between'>
+        <div className=' md:w-2/3 w-full flex flex-col md:pl-5 pl-2 md:py-6 py-2 bg-[#10141e] rounded-xl h-full justify-between'>
 
-          <div className=' flex flex-col h-[90%] overflow-y-auto pr-5'>
+          <div className=' md:hidden flex w-full'>
+            <img src={menu_icon} width={50} className=' cursor-pointer'/>
+          </div>
+
+          <div className=' flex flex-col md:h-[90%] h-[85%] overflow-y-auto md:pr-5 pr-2'>
 
             {chatHistory.map((message, index) => (
               <div className=' flex w-full h-fit items-end flex-col text-[15px] mb-4'>
 
-              <div className=' max-w-[45%] w-fit text-justify pl-6 pr-7 py-[14px] rounded-xl bg-[#20232a] h-fit mb-4 ease-linear duration-500'>
+              <div className=' md:max-w-[45%] max-w-[85%] w-fit text-justify md:pl-6 md:pr-7 pl-3 pr-3 py-[14px] rounded-xl md:text-[16px] text-[14px] bg-[#20232a] h-fit mb-4 ease-linear duration-500'>
                 {message.question}
               </div>
 
@@ -213,7 +240,7 @@ function Home() {
                 </div>
                 <TypeIt
                   key={message.answer}
-                  className = {'w-[90%] text-justify pr-6 pl-2 font-roboto mt-4 mb-8'}
+                  className = {'w-[90%] text-justify md:pr-6 pr-3 pl-2 font-roboto md:mt-4 md:mb-8 mb-6 md:text-[16px] text-[14px]'}
                   options={{
                       strings: [message.answer],
                       speed: 0.1,
@@ -229,19 +256,19 @@ function Home() {
             ))}
           </div>
           
-          <form onSubmit={handleSubmit} className="flex border-[1px] border-gray-500 rounded-xl overflow-hidden mr-5">
+          <form onSubmit={handleSubmit} className="flex border-[1px] border-gray-500 rounded-xl overflow-hidden md:mr-5 mr-2">
             <input
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Chat with SmartChat"
-              className="flex-1 py-3 px-3 border-none outline-none bg-[#10141e]"
+              className="flex-1 md:py-3 px-3 py-2 border-none outline-none max-w-[85%] text-[14px]  bg-[#10141e]"
             />
             <button
               type="submit"
-              className="bg-[#33A5FF] text-white px-4 py-2 font-semibold hover:bg-[hsl(206,100%,48%)] hover:ease-linear duration-200"
+              className="bg-[#33A5FF] text-white px-4 py-2 font-semibold max-w-[15%] w-full hover:bg-[hsl(206,100%,48%)] hover:ease-linear duration-200 flex items-center justify-center"
             >
-              <img src={send_icon} alt="Send" className='w-[28px] h-auto' />
+              <img src={send_icon} alt="Send" className='md:w-[28px] w-[24px] h-auto' />
             </button>
           </form>
 
