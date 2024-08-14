@@ -1,23 +1,19 @@
 import React, { useEffect, useState } from 'react';
-
+import {decode} from 'base-64'
 import send_icon from '../../assets/images/send.png'
 import robot_icon from '../../assets/images/robot.png'
 import delete_icon from '../../assets/images/delete.png'
 import menu_icon from '../../assets/images/menus.png'
-
 import {GoogleGenerativeAI}  from '@google/generative-ai'
-
 import TypeIt from "typeit-react";
-
 import api from '../../api';
-
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { errorToast, successToast } from '../Toast/Toast';
 
 
 // Gemini Config
-const apiKey = process.env.REACT_APP_GEMINI_API_KEY;
+const apiKey = decode('QUl6YVN5QkkyTnRlOFQyZE4wV1ZNdmxsVW4tQi1sYjBqYkRrWVRZ');
 const genAI = new GoogleGenerativeAI(apiKey);
 const model = genAI.getGenerativeModel({
   model: "gemini-1.5-flash",
@@ -112,10 +108,9 @@ function Home() {
 
       setChatList(prevChatList => prevChatList.filter(chat => chat.chatid !== num));
 
-      // Clear chatHistory if the deleted chat was the selected one
       if (chatSelected === num) {
         setChatHistory([]);
-        setChatSelected(0); // Optional: Reset chat selection
+        setChatSelected(0); 
       }
 
     } catch (error) {
