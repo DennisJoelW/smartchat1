@@ -1,12 +1,19 @@
 import React, { useEffect, useState } from 'react';
+
 import send_icon from '../../assets/images/send.png'
 import robot_icon from '../../assets/images/robot.png'
+import delete_icon from '../../assets/images/delete.png'
+
 import {GoogleGenerativeAI}  from '@google/generative-ai'
+
 import TypeIt from "typeit-react";
+
 import api from '../../api';
+
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { errorToast, successToast } from '../Toast/Toast';
+
 
 // Gemini Config
 const apiKey = process.env.REACT_APP_GEMINI_API_KEY;
@@ -40,7 +47,13 @@ function Home() {
       setChatHistory([...chatHistory, newMessage]);
 
       setInput('')
-      console.log(text);
+
+      if(user !== '' && chatSelected != 0){
+          await api.put(`/chat-history/${chatSelected}`,{
+            question: input,
+            answer: text
+          });
+      }
 
     } catch (error) {
       console.log(error)
@@ -61,32 +74,72 @@ function Home() {
         const response = await api.get(`/smart-users/username/${username}`);
         setUser(response.data); 
 
-        const chatResponse = await api.get(`/chat-history/user/${response.data.id}`);
+        const chatList = await api.get(`/chat-history/user/${response.data.id}`);
 
-        setChatList(chatResponse.data)
+        setChatList(chatList.data)
 
         console.log(response.data)
         console.log("Chat selected :", chatSelected)
-        console.log("Chat response : ",chatResponse.data)
+        console.log("Chat response : ",chatList.data)
 
+        setUsername('')
+        setChatHistory([])
         successToast('Succesfully Logged in')
 
       } catch (error) {
         errorToast("User not found")
       } finally {
         setLoading(false);
+        
       }
 
   }
 
   const handleChatClicked = async (num) => {
+    try {
       setChatSelected(num)
       const chatDetail = await api.get(`/chat-history/${num}`)
-
-      console.log(chatDetail)
-
       setChatHistory(chatDetail.data.questions_answers);
+    } catch (error) {
+      console.log(error)
+    }
   }
+
+  const deleteChat = async (num) => {
+    try {
+      await api.delete(`chat-history/${num}`)
+
+      setChatList(prevChatList => prevChatList.filter(chat => chat.chatid !== num));
+
+      // Clear chatHistory if the deleted chat was the selected one
+      if (chatSelected === num) {
+        setChatHistory([]);
+        setChatSelected(0); // Optional: Reset chat selection
+      }
+
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+  const newChat = async () => {
+
+  }
+
+  useEffect(() => {
+    const fetchChatList = async () => {
+      if (user) {
+        try {
+          const response = await api.get(`/chat-history/user/${user.id}`);
+          setChatList(response.data);
+        } catch (error) {
+          console.log(error)
+        }
+      }
+    };
+  
+    fetchChatList();
+  },chatList)
 
 
   return (
@@ -103,7 +156,7 @@ function Home() {
               type='text'
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              placeholder='Enter your username'
+              placeholder='Enter your username (username : user)'
               className=' px-3 py-3 rounded-xl mb-4 text-white bg-[#20232A]'
             />
 
@@ -113,19 +166,31 @@ function Home() {
           </div>
 
           :           
-          <>
-            <p className='mb-2'>Chat List</p>
+          <div className=' flex flex-col justify-between h-full'>
+            <div>
+              <p className='mb-2'>Chat List</p>
 
-            <div className="overflow-y-auto" style={{ maxHeight: 'calc(100vh - 6rem)' }}>
-              <div className="flex flex-col">
-                {chatList.map((item, index) => (
-                  <div key={index} className={`p-3 rounded-md cursor-pointer ${item.chatid === chatSelected ? "bg-[#20232A] text-white" : "bg-none"}`} onClick={() => handleChatClicked(item.chatid)}>
-                    {item.questions_answers.length > 0 ? item.questions_answers[0].question : 'No questions available'}
-                  </div>
-                ))}
+              <div className="overflow-y-auto" style={{ maxHeight: 'calc(100vh - 6rem)' }}>
+                <div className="flex flex-col">
+                  {chatList.map((item, index) => (
+                    <div key={index} className={`p-3 rounded-md cursor-pointer hover:bg-[#20232A] ease-linear duration-200 mb-[5px] flex flex-row items-center justify-between
+                    ${item.chatid === chatSelected ? "bg-[#20232A] text-white" : "bg-none"}`} onClick={() => handleChatClicked(item.chatid)}>
+                      {item.questions_answers.length > 0 ? item.questions_answers[0].question : 'No questions available'}
+                      <div> 
+                      {item.chatid === chatSelected ? (
+                          <img src={delete_icon} className=' hover:bg-[hsl(0,72%,40%)] p-2 rounded-lg' width={31} alt="Delete Icon" onClick={() => deleteChat(item.chatid)} />
+                      ) : null}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
-          </>
+
+            <button className=' bg-[#33A5FF] px-3 py-3 rounded-xl text-white hover:bg-[hsl(206,100%,48%)] ease-in-out duration-200' onClick={() => {setUser(''); setChatSelected(0); setChatHistory([])}}>
+              Logout
+            </button>
+          </div>
           }
 
 
@@ -138,7 +203,7 @@ function Home() {
             {chatHistory.map((message, index) => (
               <div className=' flex w-full h-fit items-end flex-col text-[15px] mb-4'>
 
-              <div className=' max-w-[45%] w-fit text-justify pl-6 pr-7 py-[14px] rounded-xl bg-[#20232a] h-fit mb-6 ease-linear duration-500'>
+              <div className=' max-w-[45%] w-fit text-justify pl-6 pr-7 py-[14px] rounded-xl bg-[#20232a] h-fit mb-4 ease-linear duration-500'>
                 {message.question}
               </div>
 
@@ -148,7 +213,7 @@ function Home() {
                 </div>
                 <TypeIt
                   key={message.answer}
-                  className = {'w-[90%] text-justify pr-6 pl-2 font-roboto mt-2 mb-4'}
+                  className = {'w-[90%] text-justify pr-6 pl-2 font-roboto mt-4 mb-8'}
                   options={{
                       strings: [message.answer],
                       speed: 0.1,
