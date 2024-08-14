@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import send_icon from '../../assets/images/send.png'
+import robot_icon from '../../assets/images/robot.png'
 import {GoogleGenerativeAI}  from '@google/generative-ai'
 import TypeIt from "typeit-react";
 import api from '../../api';
@@ -17,10 +18,15 @@ const model = genAI.getGenerativeModel({
 
 function Home() {
   const [input, setInput] = useState('');
-  const [chatHistory, setChatHistory] = useState([])
+  const [username, setUsername] = useState('');
+
+  const [chatHistory, setChatHistory] = useState([]);
+  const [chatList, setChatList] = useState([])
+  const [chatSelected, setChatSelected] = useState(0);
+
   const [loading, setLoading] = useState(false);
-  const [user, setUser] = useState('')
-  const [username, setUsername] = useState('')
+  const [user, setUser] = useState('');
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -51,16 +57,35 @@ function Home() {
       }
 
       try {
+
         const response = await api.get(`/smart-users/username/${username}`);
         setUser(response.data); 
+
+        const chatResponse = await api.get(`/chat-history/user/${response.data.id}`);
+
+        setChatList(chatResponse.data)
+
+        console.log(response.data)
+        console.log("Chat selected :", chatSelected)
+        console.log("Chat response : ",chatResponse.data)
+
         successToast('Succesfully Logged in')
-        console.log(response)
+
       } catch (error) {
         errorToast("User not found")
       } finally {
         setLoading(false);
       }
 
+  }
+
+  const handleChatClicked = async (num) => {
+      setChatSelected(num)
+      const chatDetail = await api.get(`/chat-history/${num}`)
+
+      console.log(chatDetail)
+
+      setChatHistory(chatDetail.data.questions_answers);
   }
 
 
@@ -79,7 +104,7 @@ function Home() {
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               placeholder='Enter your username'
-              className=' px-3 py-3 rounded-xl mb-4 text-white'
+              className=' px-3 py-3 rounded-xl mb-4 text-white bg-[#20232A]'
             />
 
             <button className=' bg-[#33A5FF] px-3 py-3 rounded-xl text-white hover:bg-[hsl(206,100%,48%)] ease-in-out duration-200' onClick={login}>
@@ -89,20 +114,19 @@ function Home() {
 
           :           
           <>
-            <p className=' mb-2'>Chat List</p>
+            <p className='mb-2'>Chat List</p>
 
             <div className="overflow-y-auto" style={{ maxHeight: 'calc(100vh - 6rem)' }}>
-
-              <div className="flex flex-col gap-3">
-
-                <div className="p-3 rounded-md bg-[#20232a] cursor-pointer">Pertanyaan Pertama</div>
-                <div className="p-3 rounded-md cursor-pointer">Pertanyaan Kedua</div>
-                <div className="p-3 rounded-md cursor-pointer">Ketiga dan terakhir</div>
-
+              <div className="flex flex-col">
+                {chatList.map((item, index) => (
+                  <div key={index} className={`p-3 rounded-md cursor-pointer ${item.chatid === chatSelected ? "bg-[#20232A] text-white" : "bg-none"}`} onClick={() => handleChatClicked(item.chatid)}>
+                    {item.questions_answers.length > 0 ? item.questions_answers[0].question : 'No questions available'}
+                  </div>
+                ))}
               </div>
-              
             </div>
-          </>}
+          </>
+          }
 
 
         </div>
@@ -112,23 +136,29 @@ function Home() {
           <div className=' flex flex-col h-[90%] overflow-y-auto pr-5'>
 
             {chatHistory.map((message, index) => (
-              <div className=' flex w-full h-fit items-end flex-col text-[15px] mb-4 border-b-[1px] pb-4'>
+              <div className=' flex w-full h-fit items-end flex-col text-[15px] mb-4'>
 
               <div className=' max-w-[45%] w-fit text-justify pl-6 pr-7 py-[14px] rounded-xl bg-[#20232a] h-fit mb-6 ease-linear duration-500'>
                 {message.question}
               </div>
 
-              <TypeIt
-                key={index}
-                className = {'w-full text-justify pr-6 font-roboto'}
-                options={{
-                    strings: [message.answer],
-                    speed: 10,
-                    waitUntilVisible: true,
-                    cursor: false,
+              <div className=' flex flex-row items-start w-full'>
+                <div className=' w-[10%]'>
+                  <img src={robot_icon} alt="" className=' w-[60px] h-auto' />
+                </div>
+                <TypeIt
+                  key={message.answer}
+                  className = {'w-[90%] text-justify pr-6 pl-2 font-roboto mt-2 mb-4'}
+                  options={{
+                      strings: [message.answer],
+                      speed: 0.1,
+                      waitUntilVisible: true,
+                      cursor: false,
+                  }
                 }
-              }
-              />
+                />
+              </div>
+
 
               </div>
             ))}
