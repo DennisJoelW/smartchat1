@@ -51,5 +51,13 @@ FRONTEND REACT (run on terminal) :
   React for the front-end framework
   Laravel for the back-end framework
 
+## Screenshots
+![Chat with the bot](./Web%20Screenshots/Initial%20view.png)
+![Initial view](./Web%20Screenshots/Chat%20with%20bot.png)
+![Login user with saved chat history](./Web%20Screenshots/Login%20user%20with%20saved%20chat%20history.png)
+![Mobile chat view](./Web%20Screenshots/mobile%20chat%20view.png)
+![Mobile view](./Web%20Screenshots/Mobile%20view.png)
+
+
 ## Website Presentation on video
 gdrive : 
